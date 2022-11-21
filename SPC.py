@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+
 from scipy.stats import shapiro
 
 # Load source csv file
@@ -76,9 +77,9 @@ def parse_institutions(inputs):
 
 #Statistical Process Control
 #Rule 1: Points above the UCL or below the LCL
-#rule_1 = 0
-#if mean > ucl | mean < lcl:
-#    rule_1 = rule_1 + 1
+rule_1 = 0
+if mean > ucl | mean < lcl:
+    rule_1 = rule_1 + 1
 #Rule 2: 2 of 3 consecutive points above or below 2 standard deviations (Zone A or beyond)
 
 #Rule 3: 4 of 5 consecutive points above or below 1 standard deviations (Zone B or beyond)
