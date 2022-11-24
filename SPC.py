@@ -5,13 +5,12 @@ from scipy.stats import shapiro
 
 # Load source csv file
 inputs = pd.read_csv("test.csv")
-inputs = inputs.sort_values(["Institution_ID"])
 
 # Get lists of institution IDs, measures, staff roles, and staff IDs to stratify outcomes by
 institution_list = inputs["Institution_ID"].drop_duplicates()
 measure_list = inputs["Measure"].drop_duplicates()
 staff_role_list = inputs["Staff_Type"].drop_duplicates()
-staff_id_list = inputs["Staff_ID"].drop_duplicates()
+staff_id_list = inputs["Staff_ID"].drop_duplicates().sort_values()
 
 # Summarize institutional data, per measure, per peer group into a new dataframe
 def parse_institutions(inputs):
@@ -34,6 +33,8 @@ def parse_institutions(inputs):
 
                 #Calculate mean, std, lcl, and ucl per institution, per measure, per provider role
                 mean = staff_role["Pass_percentage"].mean()
+                if np.isnan(mean):
+                    continue
                 std = staff_role["Pass_percentage"].std()
                 lcl = mean - (3 * std)
                 ucl = mean + (3 * std)
@@ -73,13 +74,12 @@ def parse_institutions(inputs):
 
 # Create an new dataframe reorganizing each row into a staff member per measure
 def parse_subjects(inputs):
-    inputs = inputs.sort_values(["Staff_ID"])
     staff_id = [[] for x in range(len(staff_id_list))]
     x = -1
     for i in staff_id_list:
         x = x + 1
         staff = inputs[inputs["Staff_ID"] == i]
-        staff_id[x].append(i)
+        staff_id[x].append(int(i))
     return(staff_id)
 
 
@@ -96,7 +96,7 @@ def parse_subjects(inputs):
 
 #Rule 5: Trend of 6 points in a row increasing or decreasing
 
-##parse_institutions(inputs).to_csv("Institution_Summary.csv")
+parse_institutions(inputs).to_csv("Institution_Summary.csv")
 
 print(parse_institutions(inputs))
 print(parse_subjects(inputs))
