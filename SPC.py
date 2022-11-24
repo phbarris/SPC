@@ -5,18 +5,15 @@ from scipy.stats import shapiro
 
 # Load source csv file
 inputs = pd.read_csv("test.csv")
-
-# Get lists of institution IDs, measures, and staff roles to stratify outcomes by
-## Get a list of institution IDs
 inputs = inputs.sort_values(["Institution_ID"])
+
+# Get lists of institution IDs, measures, staff roles, and staff IDs to stratify outcomes by
 institution_list = inputs["Institution_ID"].drop_duplicates()
-## Get a list of measures
-measures = inputs["Measure"].drop_duplicates()
-## Get a list of staff roles
-staff_role = inputs["Staff_Type"].drop_duplicates()
+measure_list = inputs["Measure"].drop_duplicates()
+staff_role_list = inputs["Staff_Type"].drop_duplicates()
+staff_id_list = inputs["Staff_ID"].drop_duplicates()
 
-
-# Summarize institutional data, per measure, per peer group
+# Summarize institutional data, per measure, per peer group into a new dataframe
 def parse_institutions(inputs):
 
     list_institutions = [] #Create lists for output variables
@@ -30,19 +27,19 @@ def parse_institutions(inputs):
 
     for i in institution_list:
         institution = inputs[inputs["Institution_ID"] == i] #separates individual institutions
-        for j in measures:
+        for j in measure_list:
             measure = institution[institution["Measure"] == j] #separates measures per institution
-            for k in staff_role:
-                staff = measure[measure["Staff_Type"] == k] # separates measures per peer group
+            for k in staff_role_list:
+                staff_role = measure[measure["Staff_Type"] == k] # separates measures per peer group
 
                 #Calculate mean, std, lcl, and ucl per institution, per measure, per provider role
-                mean = staff["Pass_percentage"].mean()
-                std = staff["Pass_percentage"].std()
+                mean = staff_role["Pass_percentage"].mean()
+                std = staff_role["Pass_percentage"].std()
                 lcl = mean - (3 * std)
                 ucl = mean + (3 * std)
 
                 #Is the institutional performance per measure per peer group normally distributed?
-                stat, p = shapiro(staff["Pass_percentage"])
+                stat, p = shapiro(staff_role["Pass_percentage"])
                 alpha = 0.05
                 distribution = False
                 if p > alpha:
@@ -74,6 +71,17 @@ def parse_institutions(inputs):
 
     return(institution_df)
 
+# Create an new dataframe reorganizing each row into a staff member per measure
+def parse_subjects(inputs):
+    inputs = inputs.sort_values(["Staff_ID"])
+    staff_id = [[] for x in range(len(staff_id_list))]
+    x = -1
+    for i in staff_id_list:
+        x = x + 1
+        staff = inputs[inputs["Staff_ID"] == i]
+        staff_id[x].append(i)
+    return(staff_id)
+
 
 #Statistical Process Control
 #Rule 1: Points above the UCL or below the LCL
@@ -88,6 +96,7 @@ def parse_institutions(inputs):
 
 #Rule 5: Trend of 6 points in a row increasing or decreasing
 
-parse_institutions(inputs).to_csv("Institution_Summary.csv")
+##parse_institutions(inputs).to_csv("Institution_Summary.csv")
 
 print(parse_institutions(inputs))
+print(parse_subjects(inputs))
