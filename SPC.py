@@ -76,10 +76,23 @@ def parse_institutions(inputs):
 def parse_subjects(inputs):
     staff_id = [[] for x in range(len(staff_id_list))]
     x = -1
-    for i in staff_id_list:
+    for i in staff_id_list: 
         x = x + 1
-        staff = inputs[inputs["Staff_ID"] == i]
-        staff_id[x].append(int(i))
+        staff_id[x].append(i) #Place each staff ID into [0] of its own nested list    
+
+        staff_rows = inputs[inputs["Staff_ID"] == i].reset_index()
+        staff_id[x].append(staff_rows.loc[0, "Institution_ID"]) #Add institution ID to each individuals list at [1]
+
+        staff_id[x].append(staff_rows.loc[0, "Staff_Type"]) ##Add staff type to individuals list at [2]
+
+        for j in measure_list:
+            staff_rows_by_measure = staff_rows[staff_rows["Measure"] == j].reset_index() #For each measure, pull the measure name and the ordered data into a nested list for the individual staff member at [3]
+            if staff_rows_by_measure.empty:
+                continue
+            staff_pass_percentages = staff_rows_by_measure["Pass_percentage"].tolist()
+            measure_summary = [staff_rows_by_measure.loc[0, "Measure"], staff_pass_percentages]
+            staff_id[x].append(measure_summary)
+          
     return(staff_id)
 
 
@@ -100,3 +113,10 @@ parse_institutions(inputs).to_csv("Institution_Summary.csv")
 
 print(parse_institutions(inputs))
 print(parse_subjects(inputs))
+
+institution_df = parse_institutions(inputs)
+staff_performance_list = parse_subjects(inputs)
+
+
+for Staff_ID in staff_performance_list:
+    print(Staff_ID)
