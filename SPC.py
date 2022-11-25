@@ -72,51 +72,107 @@ def parse_institutions(inputs):
 
     return(institution_df)
 
-# Create an new dataframe reorganizing each row into a staff member per measure
+#Calcualte the total unique time measures are seen across all providers
+def tot_measure_x_individuals(inputs):
+    y = 0
+    for i in staff_id_list:
+        staff_rows = inputs[inputs["Staff_ID"] == i]
+        for j in measure_list:
+            measure = staff_rows[staff_rows["Measure"] == j]
+            if measure.empty:
+                continue
+            y = y + 1
+    return(y)
+
+# Create a list for each staff member sperformance on an individual measure
 def parse_subjects(inputs):
-    staff_id = [[] for x in range(len(staff_id_list))]
+    staff_id = [[] for x in range(tot_measure_x_individuals(inputs))]
     x = -1
     for i in staff_id_list: 
-        x = x + 1
-        staff_id[x].append(i) #Place each staff ID into [0] of its own nested list    
-
         staff_rows = inputs[inputs["Staff_ID"] == i].reset_index()
-        staff_id[x].append(staff_rows.loc[0, "Institution_ID"]) #Add institution ID to each individuals list at [1]
-
-        staff_id[x].append(staff_rows.loc[0, "Staff_Type"]) ##Add staff type to individuals list at [2]
-
         for j in measure_list:
-            staff_rows_by_measure = staff_rows[staff_rows["Measure"] == j].reset_index() #For each measure, pull the measure name and the ordered data into a nested list for the individual staff member at [3]
+            staff_rows_by_measure = staff_rows[staff_rows["Measure"] == j].reset_index() 
             if staff_rows_by_measure.empty:
                 continue
             staff_pass_percentages = staff_rows_by_measure["Pass_percentage"].tolist()
-            measure_summary = [staff_rows_by_measure.loc[0, "Measure"], staff_pass_percentages]
-            staff_id[x].append(measure_summary)
-          
+            x = x + 1 #Increment after each measure
+            staff_id[x].append(i) #Staff ID at [0]
+            staff_id[x].append(staff_rows_by_measure.loc[0, "Institution_ID"]) # Institution ID at [1]
+            staff_id[x].append(staff_rows_by_measure.loc[0, "Staff_Type"]) # Staff role at [2]
+            staff_id[x].append(staff_rows_by_measure.loc[0, "Measure"]) # Measre at [3]
+            staff_id[x].append(staff_pass_percentages) #serial performance data in a nested list at [4]
     return(staff_id)
-
-
-#Statistical Process Control
-#Rule 1: Points above the UCL or below the LCL
-#rule_1 = 0
-#if mean > ucl | mean < lcl:
-    #rule_1 = rule_1 + 1
-#Rule 2: 2 of 3 consecutive points above or below 2 standard deviations (Zone A or beyond)
-
-#Rule 3: 4 of 5 consecutive points above or below 1 standard deviations (Zone B or beyond)
-
-#Rule 4: 9 consecutive points fall on the same side of the centerline (Zone C or beyond
-
-#Rule 5: Trend of 6 points in a row increasing or decreasing
-
-parse_institutions(inputs).to_csv("Institution_Summary.csv")
-
-print(parse_institutions(inputs))
-print(parse_subjects(inputs))
 
 institution_df = parse_institutions(inputs)
 staff_performance_list = parse_subjects(inputs)
 
+# Create output dataframe for SPC
+SPC_results = pd.DataFrame(
+    {"Staff_ID": [],
+     "Institution": [],
+     "Role": [],
+     "Measure": [],
+     "Time_Points_tracked": [],
+     "Distribution": [],
+     "Unwarrented_Variation": [],
+     "Magnitude_of_Variation": [],
+     "Magnitude_of_Positive_Variation": [],
+     "Magnitude_of_Negative_Variation": [],
+     "Rule_1_Positive": [],
+     "Rule_1_Negative": [],
+     "Rule_2_Positive": [],
+     "Rule_2_Negative": [],
+     "Rule_3_Positive": [],
+     "Rule_3_Negative": [],
+     "Rule_4_Positive": [],
+     "Rule_4_Negative": [],
+     "Rule_5_Positive": [],
+     "Rule_5_Negative": [] })
 
-for Staff_ID in staff_performance_list:
-    print(Staff_ID)
+
+##SPC function, work in progress
+for staff_ID in staff_performance_list:
+    
+    #For each staff/measure on the performance list, pull the matching data from the institution_df
+    matched_institution = institution_df[(institution_df["Institution"] == staff_ID[1]) & (institution_df["Measure"] == staff_ID[3]) & (institution_df["Staff_Role"] == staff_ID[2])].values.tolist() ##matches the individual in the loop to their institutions dataframe
+    mean = matched_institution[0][3]
+    std = matched_institution[0][4]
+    lcl = matched_institution[0][5]
+    ucl = matched_institution[0][6]
+    distribution = matched_institution[0][7]
+
+    pass_percentages = staff_ID[4]
+
+    #Rule 1: Points above the UCL or below the LCL
+    rule_1_p = 0
+    rule_1_n = 0
+    for i in pass_percentages:
+        if i > ucl:
+            rule_1_p = rule_1_p + 1
+        if i < lcl:
+            rule_1_n = rule_1_n + 1
+   
+    #Rule 2: 2 of 3 consecutive points above or below 2 standard deviations (Zone A or beyond)
+    rule_2_p = 0
+    rule_2_n = 0
+    for i in pass_percentages:
+        if i > (mean + (2 * std)):
+            if i + 1 > (mean + (2 * std)):
+                rule_2_p = rule_2_p + 1
+        if i < (mean - (2 * std)):
+            if i + 1 < (mean - (2 * std)):
+                rule_2_n = rule_2_n + 1
+
+    #Rule 3: 4 of 5 consecutive points above or below 1 standard deviations (Zone B or beyond)
+
+    #Rule 4: 9 consecutive points fall on the same side of the centerline (Zone C or beyond
+
+    #Rule 5: Trend of 6 points in a row increasing or decreasing
+    
+    #Create output variables to build into list prior to pushing to dataframe
+    output_ID = staff_ID[0]
+    output_Institution = staff_ID[1]
+    output_Role = staff_ID[2]
+    output_Measure = staff_ID[3]
+    output_Time = len(staff_ID[4])
+    output_Distribution = distribution

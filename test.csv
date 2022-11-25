@@ -23,10 +23,10 @@ Institution_ID,Staff_ID,Staff_Type,Measure,Month,Case_Number,Pass_percentage
 100,1,Attending,BP01,6/1/2014,67,90
 100,1,Attending,BP01,7/1/2014,43,95
 100,1,Attending,BP01,8/1/2014,56,88
-100,34,Attending,BP01,9/1/2014,34,89
-100,34,Attending,BP01,10/1/2014,45,93
+100,34,Attending,BP01,9/1/2014,34,86
+100,34,Attending,BP01,10/1/2014,45,85
 100,34,Attending,BP01,11/1/2014,65,94
-100,34,Attending,BP01,12/1/2014,45,95
+100,34,Attending,BP01,12/1/2014,45,65
 100,1,Attending,BP01,1/1/2015,34,96
 100,1,Attending,BP01,2/1/2015,23,97
 100,1,Attending,BP01,3/1/2015,56,99
