@@ -4,7 +4,7 @@ import numpy as np
 from scipy.stats import shapiro
 
 # Load source csv file
-inputs = pd.read_csv("test.csv")
+inputs = pd.read_csv("Raw_Data.csv")
 
 # Get lists of institution IDs, measures, staff roles, and staff IDs to stratify outcomes by
 institution_list = inputs["Institution_ID"].drop_duplicates()
@@ -57,18 +57,15 @@ def parse_institutions(inputs):
                 list_distribution.append(distribution)
 
     #Transform lists into dictionary for dataframe conversion
-    institution_d = {
-        "Institution": list_institutions,
+    institution_df = pd.DataFrame(
+        {"Institution": list_institutions,
         "Measure": list_measures,
         "Staff_Role": list_staffrole,
         "Mean": list_means,
         "Standard_Deviation": list_std,
         "Lower_Control_Limit": list_lcl,
         "Upper_Control_Limit": list_ucl,
-        "Distribution": list_distribution
-        }
-
-    institution_df = pd.DataFrame(data= institution_d)
+        "Distribution": list_distribution})
 
     return(institution_df)
 
@@ -140,12 +137,6 @@ def spc(institution_df, staff_performance_list):
         ucl = matched_institution[0][6]
         distribution = matched_institution[0][7]
 
-        ##-------------------------------------------------------------------------------------------------------#
-
-        # add function to only perform rules if distribtuion is normal (true)
-
-        #--------------------------------------------------------------------------------------------------------#
-   
         pass_percentages = staff_ID[4]
         size = len(pass_percentages)
 
@@ -161,23 +152,23 @@ def spc(institution_df, staff_performance_list):
         #Rule 2: 2 of 3 consecutive points above or below 2 standard deviations (Zone A or beyond)
         rule_2_p = 0
         rule_2_n = 0
-        A_p = mean + (2 * std)
-        A_n = mean - (2 * std)
+        a_p = mean + (2 * std)
+        a_n = mean - (2 * std)
         for i in range(size - 1):
-            if pass_percentages[i] > A_p and pass_percentages[i + 1] > A_p:
+            if pass_percentages[i] > a_p and pass_percentages[i + 1] > a_p:
                 rule_2_p = rule_2_p + 1
-            if pass_percentages[i] < A_n and pass_percentages[i + 1] < A_n:
+            if pass_percentages[i] < a_n and pass_percentages[i + 1] < a_n:
                 rule_2_n = rule_2_n + 1
 
         #Rule 3: 4 of 5 consecutive points above or below 1 standard deviations (Zone B or beyond)
         rule_3_p = 0
         rule_3_n = 0
-        B_p = mean + std
-        B_n = mean - std
+        b_p = mean + std
+        b_n = mean - std
         for i in range(size - 3):
-            if pass_percentages[i] > B_p and pass_percentages[i + 1] > B_p and pass_percentages[i + 2] > B_p and pass_percentages[i + 3] > B_p:
+            if pass_percentages[i] > b_p and pass_percentages[i + 1] > b_p and pass_percentages[i + 2] > b_p and pass_percentages[i + 3] > b_p:
                 rule_3_p = rule_3_p + 1
-            if pass_percentages[i] < B_n and pass_percentages[i + 1] < B_n and pass_percentages[i + 2] < B_n and pass_percentages[i + 3] < B_n:
+            if pass_percentages[i] < b_n and pass_percentages[i + 1] < b_n and pass_percentages[i + 2] < b_n and pass_percentages[i + 3] < b_n:
                 rule_3_n = rule_3_n + 1
    
         #Rule 4: 9 consecutive points fall on the same side of the centerline (Zone C or beyond
@@ -207,6 +198,22 @@ def spc(institution_df, staff_performance_list):
         mag_Variation_n = rule_1_n + rule_2_n + rule_3_n + rule_4_n + rule_5_i
         mag_Variation_tot = mag_Variation_p + mag_Variation_n
 
+        #If distribution is not normally distributed, nullify unwarrented variation based on the mead/std
+        if distribution == False:
+            unwarrented_Variation = False
+            mag_Variation_tot = 0
+            mag_Variation_n = 0
+            mag_Variation_p = 0
+            rule_1_n = 0
+            rule_1_p = 0
+            rule_2_n = 0
+            rule_2_p = 0
+            rule_3_n = 0
+            rule_3_p = 0
+            rule_4_n = 0
+            rule_4_p = 0
+            rule_5_d = 0
+            rule_5_i = 0
 
         #Append list with variables from iteration
         list_Staff_ID.append(staff_ID[0])
@@ -231,7 +238,7 @@ def spc(institution_df, staff_performance_list):
         list_Rule_5_Negative.append(rule_5_d)
 
 
-        SPC_results_df = pd.DataFrame(
+        spc_results_df = pd.DataFrame(
         {"Staff_ID": list_Staff_ID,
          "Institution": list_Instituion,
          "Role": list_Role,
@@ -253,6 +260,6 @@ def spc(institution_df, staff_performance_list):
          "Rule_5_Positive": list_Rule_5_Positive,
          "Rule_5_Negative": list_Rule_5_Negative,})
 
-    return(SPC_results_df)
+    return(spc_results_df)
 
 spc(institution_df, staff_performance_list).to_csv("SPC_Results.csv")
