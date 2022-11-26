@@ -106,73 +106,153 @@ def parse_subjects(inputs):
 institution_df = parse_institutions(inputs)
 staff_performance_list = parse_subjects(inputs)
 
-# Create output dataframe for SPC
-SPC_results = pd.DataFrame(
-    {"Staff_ID": [],
-     "Institution": [],
-     "Role": [],
-     "Measure": [],
-     "Time_Points_tracked": [],
-     "Distribution": [],
-     "Unwarrented_Variation": [],
-     "Magnitude_of_Variation": [],
-     "Magnitude_of_Positive_Variation": [],
-     "Magnitude_of_Negative_Variation": [],
-     "Rule_1_Positive": [],
-     "Rule_1_Negative": [],
-     "Rule_2_Positive": [],
-     "Rule_2_Negative": [],
-     "Rule_3_Positive": [],
-     "Rule_3_Negative": [],
-     "Rule_4_Positive": [],
-     "Rule_4_Negative": [],
-     "Rule_5_Positive": [],
-     "Rule_5_Negative": [] })
+def spc(institution_df, staff_performance_list):
+    #Create output variable lists
+    list_Staff_ID = []
+    list_Instituion = []
+    list_Role = []
+    list_Measure = []
+    list_Time_Points_Tracked = []
+    list_Distribution = []
+    list_Unwarented_Variation = []
+    list_Magnitude_of_Varitation = []
+    list_Magnitude_of_Positive_Variation = []
+    list_Magnitude_of_Negative_Variation = []
+    list_Rule_1_Positive = []
+    list_Rule_1_Negative = []
+    list_Rule_2_Positive = []
+    list_Rule_2_Negative = []
+    list_Rule_3_Positive = []
+    list_Rule_3_Negative = []
+    list_Rule_4_Positive = []
+    list_Rule_4_Negative = []
+    list_Rule_5_Positive = []
+    list_Rule_5_Negative = []
 
-
-##SPC function, work in progress
-for staff_ID in staff_performance_list:
+    ##SPC function, work in progress
+    for staff_ID in staff_performance_list:
     
-    #For each staff/measure on the performance list, pull the matching data from the institution_df
-    matched_institution = institution_df[(institution_df["Institution"] == staff_ID[1]) & (institution_df["Measure"] == staff_ID[3]) & (institution_df["Staff_Role"] == staff_ID[2])].values.tolist() ##matches the individual in the loop to their institutions dataframe
-    mean = matched_institution[0][3]
-    std = matched_institution[0][4]
-    lcl = matched_institution[0][5]
-    ucl = matched_institution[0][6]
-    distribution = matched_institution[0][7]
+        #For each staff/measure on the performance list, pull the matching data from the institution_df
+        matched_institution = institution_df[(institution_df["Institution"] == staff_ID[1]) & (institution_df["Measure"] == staff_ID[3]) & (institution_df["Staff_Role"] == staff_ID[2])].values.tolist() ##matches the individual in the loop to their institutions dataframe
+        mean = matched_institution[0][3]
+        std = matched_institution[0][4]
+        lcl = matched_institution[0][5]
+        ucl = matched_institution[0][6]
+        distribution = matched_institution[0][7]
 
-    pass_percentages = staff_ID[4]
+        ##-------------------------------------------------------------------------------------------------------#
 
-    #Rule 1: Points above the UCL or below the LCL
-    rule_1_p = 0
-    rule_1_n = 0
-    for i in pass_percentages:
-        if i > ucl:
-            rule_1_p = rule_1_p + 1
-        if i < lcl:
-            rule_1_n = rule_1_n + 1
+        # add function to only perform rules if distribtuion is normal (true)
+
+        #--------------------------------------------------------------------------------------------------------#
    
-    #Rule 2: 2 of 3 consecutive points above or below 2 standard deviations (Zone A or beyond)
-    rule_2_p = 0
-    rule_2_n = 0
-    for i in pass_percentages:
-        if i > (mean + (2 * std)):
-            if i + 1 > (mean + (2 * std)):
+        pass_percentages = staff_ID[4]
+        size = len(pass_percentages)
+
+        #Rule 1: Points above the UCL or below the LCL
+        rule_1_p = 0
+        rule_1_n = 0
+        for i in pass_percentages:
+            if i > ucl:
+                rule_1_p = rule_1_p + 1
+            if i < lcl:
+                rule_1_n = rule_1_n + 1
+   
+        #Rule 2: 2 of 3 consecutive points above or below 2 standard deviations (Zone A or beyond)
+        rule_2_p = 0
+        rule_2_n = 0
+        A_p = mean + (2 * std)
+        A_n = mean - (2 * std)
+        for i in range(size - 1):
+            if pass_percentages[i] > A_p and pass_percentages[i + 1] > A_p:
                 rule_2_p = rule_2_p + 1
-        if i < (mean - (2 * std)):
-            if i + 1 < (mean - (2 * std)):
+            if pass_percentages[i] < A_n and pass_percentages[i + 1] < A_n:
                 rule_2_n = rule_2_n + 1
 
-    #Rule 3: 4 of 5 consecutive points above or below 1 standard deviations (Zone B or beyond)
+        #Rule 3: 4 of 5 consecutive points above or below 1 standard deviations (Zone B or beyond)
+        rule_3_p = 0
+        rule_3_n = 0
+        B_p = mean + std
+        B_n = mean - std
+        for i in range(size - 3):
+            if pass_percentages[i] > B_p and pass_percentages[i + 1] > B_p and pass_percentages[i + 2] > B_p and pass_percentages[i + 3] > B_p:
+                rule_3_p = rule_3_p + 1
+            if pass_percentages[i] < B_n and pass_percentages[i + 1] < B_n and pass_percentages[i + 2] < B_n and pass_percentages[i + 3] < B_n:
+                rule_3_n = rule_3_n + 1
+   
+        #Rule 4: 9 consecutive points fall on the same side of the centerline (Zone C or beyond
+        rule_4_p = 0
+        rule_4_n = 0
+        for i in range(size - 8):
+            if pass_percentages[i] > mean and pass_percentages[i + 1] > mean and pass_percentages[i + 2] > mean and pass_percentages[i + 3] > mean and pass_percentages[i + 4] > mean and pass_percentages[i + 5] > mean and pass_percentages[i + 6] > mean and pass_percentages[i + 7] > mean and pass_percentages[i + 8] > mean:
+                rule_4_p = rule_4_p + 1
+            if pass_percentages[i] < mean and pass_percentages[i + 1] < mean and pass_percentages[i + 2] < mean and pass_percentages[i + 3] < mean and pass_percentages[i + 4] < mean and pass_percentages[i + 5] < mean and pass_percentages[i + 6] < mean and pass_percentages[i + 7] < mean and pass_percentages[i + 8] < mean:
+                rule_4_n = rule_4_n + 1
 
-    #Rule 4: 9 consecutive points fall on the same side of the centerline (Zone C or beyond
 
-    #Rule 5: Trend of 6 points in a row increasing or decreasing
+        #Rule 5: Trend of 6 points in a row increasing or decreasing
+        rule_5_i = 0
+        rule_5_d = 0
+        for i in range(size - 5):
+            if pass_percentages[i] < pass_percentages[i + 1] < pass_percentages[i + 2] < pass_percentages[i + 3] < pass_percentages[i + 4] < pass_percentages[i + 5]: 
+                rule_5_i = rule_5_i + 1
+            if pass_percentages[i] > pass_percentages[i + 1] > pass_percentages[i + 2] > pass_percentages[i + 3] > pass_percentages[i + 4] > pass_percentages[i + 5]:
+                rule_5_d = rule_5_d + 1 
     
-    #Create output variables to build into list prior to pushing to dataframe
-    output_ID = staff_ID[0]
-    output_Institution = staff_ID[1]
-    output_Role = staff_ID[2]
-    output_Measure = staff_ID[3]
-    output_Time = len(staff_ID[4])
-    output_Distribution = distribution
+        #Summarize unwarrented variation
+        unwarrented_Variation = False
+        if rule_1_n > 0 or rule_1_p > 0 or rule_2_n > 0 or rule_2_p > 0 or rule_3_n > 0 or rule_3_p > 0 or rule_4_n > 0 or rule_4_p > 0 or rule_5_d > 0  or rule_5_i > 0:
+            unwarrented_Variation = True
+        mag_Variation_p = rule_1_p + rule_2_p + rule_3_p + rule_4_p + rule_5_d
+        mag_Variation_n = rule_1_n + rule_2_n + rule_3_n + rule_4_n + rule_5_i
+        mag_Variation_tot = mag_Variation_p + mag_Variation_n
+
+
+        #Append list with variables from iteration
+        list_Staff_ID.append(staff_ID[0])
+        list_Instituion.append(staff_ID[1])
+        list_Role.append(staff_ID[2])
+        list_Measure.append(staff_ID[3])
+        list_Time_Points_Tracked.append(len(staff_ID[4]))
+        list_Distribution.append(distribution)
+        list_Unwarented_Variation.append(unwarrented_Variation)
+        list_Magnitude_of_Varitation.append(mag_Variation_tot)
+        list_Magnitude_of_Positive_Variation.append(mag_Variation_p)
+        list_Magnitude_of_Negative_Variation.append(mag_Variation_n)
+        list_Rule_1_Positive.append(rule_1_p)
+        list_Rule_1_Negative.append(rule_1_n)
+        list_Rule_2_Positive.append(rule_2_p)
+        list_Rule_2_Negative.append(rule_2_n)
+        list_Rule_3_Positive.append(rule_3_p)
+        list_Rule_3_Negative.append(rule_3_n)
+        list_Rule_4_Positive.append(rule_4_p)
+        list_Rule_4_Negative.append(rule_4_n)
+        list_Rule_5_Positive.append(rule_5_i)
+        list_Rule_5_Negative.append(rule_5_d)
+
+
+        SPC_results_df = pd.DataFrame(
+        {"Staff_ID": list_Staff_ID,
+         "Institution": list_Instituion,
+         "Role": list_Role,
+         "Measure": list_Measure,
+         "Time_Points_tracked": list_Time_Points_Tracked,
+         "Distribution": list_Distribution,
+         "Unwarrented_Variation": list_Unwarented_Variation,
+         "Magnitude_of_Variation": list_Magnitude_of_Varitation,
+         "Magnitude_of_Positive_Variation": list_Magnitude_of_Positive_Variation,
+         "Magnitude_of_Negative_Variation": list_Magnitude_of_Negative_Variation,
+         "Rule_1_Positive": list_Rule_1_Positive,
+         "Rule_1_Negative": list_Rule_1_Negative,
+         "Rule_2_Positive": list_Rule_2_Positive,
+         "Rule_2_Negative": list_Rule_2_Negative,
+         "Rule_3_Positive": list_Rule_3_Positive,
+         "Rule_3_Negative": list_Rule_3_Negative,
+         "Rule_4_Positive": list_Rule_4_Positive,
+         "Rule_4_Negative": list_Rule_4_Negative,
+         "Rule_5_Positive": list_Rule_5_Positive,
+         "Rule_5_Negative": list_Rule_5_Negative,})
+
+    return(SPC_results_df)
+
+spc(institution_df, staff_performance_list).to_csv("SPC_Results.csv")

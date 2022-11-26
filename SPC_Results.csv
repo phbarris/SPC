@@ -1,0 +1,14 @@
+,Staff_ID,Institution,Role,Measure,Time_Points_tracked,Distribution,Unwarrented_Variation,Magnitude_of_Variation,Magnitude_of_Positive_Variation,Magnitude_of_Negative_Variation,Rule_1_Positive,Rule_1_Negative,Rule_2_Positive,Rule_2_Negative,Rule_3_Positive,Rule_3_Negative,Rule_4_Positive,Rule_4_Negative,Rule_5_Positive,Rule_5_Negative
+0,1,100,Attending,AKI01,16,FALSE,FALSE,0,0,0,0,0,0,0,0,0,0,0,0,0
+1,1,100,Attending,BP01,12,FALSE,FALSE,0,0,0,0,0,0,0,0,0,0,0,0,0
+2,2,100,Attending,AKI01,16,FALSE,FALSE,0,0,0,0,0,0,0,0,0,0,0,0,0
+3,2,100,Attending,BP01,16,FALSE,TRUE,4,0,4,0,0,0,0,0,0,0,0,4,0
+4,3,101,Attending,AKI01,16,FALSE,FALSE,0,0,0,0,0,0,0,0,0,0,0,0,0
+5,3,101,Attending,BP01,16,FALSE,TRUE,12,8,4,0,0,0,0,0,0,8,0,4,0
+6,4,101,Attending,AKI01,16,FALSE,FALSE,0,0,0,0,0,0,0,0,0,0,0,0,0
+7,4,101,Attending,BP01,16,FALSE,TRUE,2,0,2,0,1,0,1,0,0,0,0,0,0
+8,5,101,CRNA,AKI01,16,FALSE,FALSE,0,0,0,0,0,0,0,0,0,0,0,0,0
+9,5,101,CRNA,BP01,16,FALSE,TRUE,12,8,4,0,0,0,0,0,0,8,0,4,0
+10,6,101,CRNA,AKI01,16,FALSE,FALSE,0,0,0,0,0,0,0,0,0,0,0,0,0
+11,6,101,CRNA,BP01,16,FALSE,TRUE,2,0,2,0,1,0,1,0,0,0,0,0,0
+12,34,100,Attending,BP01,12,FALSE,TRUE,5,1,4,0,1,0,0,0,2,0,1,0,1
