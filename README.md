@@ -11,12 +11,11 @@ For each sample, stratified by categorical variables, the program assigns a mean
 Each unique identifier is then matched with the appropriate institution data and the following statistical process control rules are performed.
 
 **Current SPC rules tested**
-|Rule #| Rule Description                                               |
-|     1| A point falls above the UCL or below the LCL                   |
-|     2| 2 of 3 consecutive points above or below 2 standard deviations |
-|     3| 4 of 5 consecutive points above or below 1 standard deviation  |
-|     4| 9 consecutive points fall on the same side of the centerline   |
-|     5| Trend of 6 points in a row increasing or decreasing            |
+1. A point falls above the UCL or below the LCL
+2. 2 of 3 consecutive points above or below 2 standard deviations
+3. 4 of 5 consecutive points above or below 1 standard deviation
+4. 9 consecutive points fall on the same side of the centerline
+5. Trend of 6 points in a row increasing or decreasing
 
 ### Inputs
 
