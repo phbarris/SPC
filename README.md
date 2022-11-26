@@ -53,7 +53,7 @@ The program returns a csv labled "SPC_Results.csv" to the program directory. Res
 
 ### How to Run
 
-SPC.py runs without other file dependencies. Ensure that your input data file is in the same directory as SPC.py. Required libraries below. 
+SPC.py runs without other file dependencies. Ensure that your input data file is in the same directory as SPC.py. Required libraries below. The Raw_Data.csv file provided can be used to take the code for a trial run. *Note: code in the example csv file is made up and does not represent any real individuals.*
 
 #### Required Libraries
 
