@@ -215,8 +215,8 @@ def spc(institution_df, staff_performance_list):
         unwarrented_Variation = False
         if rule_1_n > 0 or rule_1_p > 0 or rule_2_n > 0 or rule_2_p > 0 or rule_3_n > 0 or rule_3_p > 0 or rule_4_n > 0 or rule_4_p > 0 or rule_5_d > 0  or rule_5_i > 0:
             unwarrented_Variation = True
-        mag_Variation_p = rule_1_p + rule_2_p + rule_3_p + rule_4_p + rule_5_d
-        mag_Variation_n = rule_1_n + rule_2_n + rule_3_n + rule_4_n + rule_5_i
+        mag_Variation_p = rule_1_p + rule_2_p + rule_3_p + rule_4_p + rule_5_i
+        mag_Variation_n = rule_1_n + rule_2_n + rule_3_n + rule_4_n + rule_5_d
         mag_Variation_tot = mag_Variation_p + mag_Variation_n
 
         #If distribution is not normally distributed, nullify unwarrented variation based on the mead/std
