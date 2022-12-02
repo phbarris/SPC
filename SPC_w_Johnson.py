@@ -49,6 +49,31 @@ def parse_institutions(inputs):
                 if p > alpha:
                     distribution = True
 
+                if distribution == False:
+                    
+                    plt.figure(figsize=(15,6))
+                    plt.title(str(i) + str(j) + str(k), fontsize=15)
+                    sns.histplot(staff_role["Pass_percentage"], kde=True, color="red")
+                    plt.show()
+                    
+                    yeojohnTr = PowerTransformer(standardize=True)
+                    df_yeojohn = pd.DataFrame(yeojohnTr.fit_transform(staff_role["Pass_percentage"].values.reshape(-1,1))) ##Apply Johnson Transformation to skewed data
+                    transformed_staff_role = staff_role.reset_index()
+                    transformed_staff_role["Transformed"] = df_yeojohn[0]
+                
+                    plt.figure(figsize=(15,6))
+                    plt.title(str(i) + str(j) + str(k), fontsize=15)
+                    sns.histplot(transformed_staff_role["Transformed"], kde=True, color="red")
+                    plt.show()
+
+                    stat, p = shapiro(transformed_staff_role["Transformed"]) #Asses for presence of normal distribution
+                    if p > alpha:
+                        distribution = True #If true, update institutional data for SPC
+                        mean = transformed_staff_role["Transformed"].mean()
+                        std = transformed_staff_role["Transformed"].std()
+                        lcl = mean - (3 * std)
+                        ucl = mean + (3 * std)  
+
                 #Add values to lists
                 list_institutions.append(i)
                 list_measures.append(j)
