@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from scipy.stats import shapiro
+from statistics import mean
 
 inputs = pd.read_csv("Raw_Data.csv")
 
@@ -29,7 +30,23 @@ for i in institution_list:
             staff_role = measure[measure["Staff_Type"] == k]
             if staff_role.empty:
                 continue
-            print(staff_role)
+            
+            mean = staff_role["Pass_percentage"].mean()
+            std = staff_role["Pass_percentage"].std()
+
+            staff_role_red = staff_role[["Staff_ID", "Month", "Pass_percentage"]]
+
+            month_list = staff_role_red["Month"].drop_duplicates()
+            monthly_std_list = []
+
+            for m in month_list:
+                month_std = staff_role_red[staff_role_red["Month"] == m]
+                monthly_std_list.append(month_std["Pass_percentage"].std(ddof=0))
+
+            s_bar = np.mean(monthly_std_list)
+            
+
+
 
 
 
