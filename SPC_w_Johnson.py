@@ -5,6 +5,7 @@ import seaborn as sns
 
 from scipy.stats import shapiro
 from sklearn.preprocessing import PowerTransformer
+from tqdm import tqdm
 
 # Load source csv file
 inputs = pd.read_csv("Raw_Data.csv")
@@ -27,7 +28,7 @@ def parse_institutions(inputs):
     list_ucl = []
     list_distribution = []
 
-    for i in institution_list:
+    for i in tqdm(institution_list):
         institution = inputs[inputs["Institution_ID"] == i] #separates individual institutions
         for j in measure_list:
             measure = institution[institution["Measure"] == j] #separates measures per institution
@@ -51,20 +52,20 @@ def parse_institutions(inputs):
 
                 if distribution == False:
                     
-                    plt.figure(figsize=(15,6))
-                    plt.title(str(i) + str(j) + str(k), fontsize=15)
-                    sns.histplot(staff_role["Pass_percentage"], kde=True, color="red")
-                    plt.show()
+                    #plt.figure(figsize=(15,6))
+                    #plt.title(str(i) + str(j) + str(k), fontsize=15)
+                    #sns.histplot(staff_role["Pass_percentage"], kde=True, color="red")
+                    #plt.show()
                     
                     yeojohnTr = PowerTransformer(standardize=True)
                     df_yeojohn = pd.DataFrame(yeojohnTr.fit_transform(staff_role["Pass_percentage"].values.reshape(-1,1))) ##Apply Johnson Transformation to skewed data
                     transformed_staff_role = staff_role.reset_index()
                     transformed_staff_role["Transformed"] = df_yeojohn[0]
                 
-                    plt.figure(figsize=(15,6))
-                    plt.title(str(i) + str(j) + str(k), fontsize=15)
-                    sns.histplot(transformed_staff_role["Transformed"], kde=True, color="red")
-                    plt.show()
+                    #plt.figure(figsize=(15,6))
+                    #plt.title(str(i) + str(j) + str(k), fontsize=15)
+                    #sns.histplot(transformed_staff_role["Transformed"], kde=True, color="red")
+                    #plt.show()
 
                     stat, p = shapiro(transformed_staff_role["Transformed"]) #Asses for presence of normal distribution
                     if p > alpha:
