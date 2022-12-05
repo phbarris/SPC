@@ -64,10 +64,15 @@ def parse_institutions(inputs):
                             "Pass_percentage": 2 - (staff_role["Pass_percentage"])})
                         staff_role_updated = pd.concat([staff_role, positive_staff_df])
 
-                        plt.figure(figsize=(15,6))
-                        plt.title(str(i) + str(j) + str(k), fontsize=15)
-                        sns.histplot(staff_role_updated["Pass_percentage"], kde=True, color="red")
-                        plt.show()
+                        #plt.figure(figsize=(15,6))
+                        #plt.title(str(i) + str(j) + str(k), fontsize=15)
+                        #sns.histplot(staff_role_updated["Pass_percentage"], kde=True, #color="red")
+                        #plt.show()
+
+                        mean = staff_role_updated["Pass_percentage"].mean()
+                        std = staff_role_updated["Pass_percentage"].mean()
+                        lcl = mean - (3 * std)
+                        ucl = mean + (3 * std)
 
                         stat, p = shapiro(staff_role_updated["Pass_percentage"])
                         if p > alpha:
