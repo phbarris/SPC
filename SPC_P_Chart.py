@@ -26,7 +26,7 @@ for i in tqdm(list_institutions):
             "Month": staff_role["Month"],
             "Sample_Size": staff_role["Denominator"],
             "Fail_Rate": staff_role["Fail_Rate"]})
-        
+
         #Drop rows with n <50
         inst_Staff = inst_Staff[inst_Staff["Sample_Size"] >= 50]
         print(inst_Staff)
@@ -35,7 +35,7 @@ for i in tqdm(list_institutions):
         #Calculate n_bar
         n_bar = inst_Staff["Sample_Size"].mean()
         #Calculate standard deviation column
-        inst_Staff["Standard_Deviation"] = ((p_bar * (1 - p_bar))/(inst_Staff["Sample_Size"]))
+        inst_Staff["Standard_Deviation"] = np.sqrt((p_bar * (1 - p_bar))/(inst_Staff["Sample_Size"]))
         #Calculate UAL and LAL columns
         inst_Staff["UAL"] = (p_bar + 3 * inst_Staff["Standard_Deviation"])
         inst_Staff["LAL"] = (p_bar - 3 * inst_Staff["Standard_Deviation"])
@@ -44,16 +44,18 @@ for i in tqdm(list_institutions):
         list_staff_id = inst_Staff["Staff_ID"].drop_duplicates()
         for k in tqdm(list_staff_id):
             staff_id = inst_Staff[inst_Staff["Staff_ID"] == k]
+            staff_id["Month"] = pd.to_datetime(staff_id["Month"])
+            staff_id = staff_id.groupby(staff_id["Month"].dt.to_period("Q"))["Sample_Size", "Fail_Rate"].sum()
             #Demonstrate plots showing p-charts
-            plt.figure(figsize=(15,6))
-            plt.plot(staff_id["Month"], staff_id["Fail_Rate"], label="Fail Rate")
-            plt.plot(staff_id["Month"], staff_id["UAL"], label="UAL")
-            plt.plot(staff_id["Month"], staff_id["LAL"], label="LAL")
-            plt.title(str(i) + " " + str(j) + " " + str(k))
-            plt.axhline(y=p_bar, color='blue', linestyle='-', label="Average Fail Rate")
-            leg = plt.legend()
-            plt.show()
-            #print(staff_ID)
+            #plt.figure(figsize=(15,6))
+            #plt.plot(staff_id["Month"], staff_id["Fail_Rate"], label="Fail Rate")
+            #plt.plot(staff_id["Month"], staff_id["UAL"], label="UAL")
+            #plt.plot(staff_id["Month"], staff_id["LAL"], label="LAL")
+            #plt.title(str(i) + " " + str(j) + " " + str(k))
+            #plt.axhline(y=p_bar, color='blue', linestyle='-', label="Average Fail Rate")
+            #leg = plt.legend()
+            #plt.show()
+            print(staff_id)
 
 
 

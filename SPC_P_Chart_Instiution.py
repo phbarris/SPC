@@ -35,7 +35,7 @@ def spc(role):
             institution = i
             month = m
             sample_size = institution_month_df["Denominator"].sum()
-            fail_rate = (sum(institution_month_df["Denominator"] * institution_month_df["Fail_Rate"]))/sample_size
+            fail_rate = institution_month_df["Fail_Rate"].mean()
             list_i.append(institution)
             list_m.append(month)
             list_ss.append(sample_size)
@@ -48,11 +48,11 @@ def spc(role):
     for i in list_institutions: #For each institution, generate a control chart
         compiled_institution_df = compiled_df[compiled_df["Institution"] == i]
         compiled_institution_df = compiled_institution_df[compiled_institution_df["Sample_Size"] >= 50]
-        p_bar = compiled_institution_df["Fail_Rate"].mean()
+        p_bar = (compiled_institution_df["Sample_Size"] * compiled_institution_df["Fail_Rate"]).sum()/compiled_institution_df["Sample_Size"].sum()
         n_bar = compiled_institution_df["Sample_Size"].mean()
-        compiled_institution_df["Standard_Deviation"] = ((p_bar * (1 - p_bar))/(compiled_institution_df["Sample_Size"]))
-        compiled_institution_df["UAL"] = (p_bar + 3 * compiled_institution_df["Standard_Deviation"])
-        compiled_institution_df["LAL"] = (p_bar - 3 * compiled_institution_df["Standard_Deviation"])
+        compiled_institution_df["Standard_Deviation"] = np.sqrt((p_bar * (1 - p_bar))/(compiled_institution_df["Sample_Size"]))
+        compiled_institution_df["UAL"] = (p_bar + (3 * compiled_institution_df["Standard_Deviation"]))
+        compiled_institution_df["LAL"] = (p_bar - (3 * compiled_institution_df["Standard_Deviation"]))
 
         plt.figure(figsize=(15,6))
         plt.plot(compiled_institution_df["Month"], compiled_institution_df["Fail_Rate"], label="Fail Rate")
@@ -62,8 +62,10 @@ def spc(role):
         plt.axhline(y=p_bar, color='blue', linestyle='-', label="Average Fail Rate")
         leg = plt.legend()
         plt.show()
+        print(p_bar)
+        print(compiled_institution_df["UAL"])
 
-
+spc(crna)
             
             
 
