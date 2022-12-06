@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 #Import data
-inputs = pd.read_csv("Inputs1.csv")
+inputs = pd.read_csv("Raw_Data.csv")
 
 #Reduce to only rows for CARD03
 inputs = inputs[inputs["Measure"] == "BP01"]
