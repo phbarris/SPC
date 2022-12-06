@@ -1,12 +1,13 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 #Import data
-inputs = pd.read_csv("Raw_Data.csv")
+inputs = pd.read_csv("Inputs1.csv")
 
 #Reduce to only rows for CARD03
-inputs = inputs[inputs["Measure"] == "CARD03"]
+inputs = inputs[inputs["Measure"] == "BP01"]
 
 #Create a row for fail rate
 inputs["Fail_Rate"] = 1 - inputs["Pass_percentage"]
@@ -16,7 +17,7 @@ list_institutions = inputs["Institution_ID"].drop_duplicates()
 list_staff_role = inputs["Staff_Type"].drop_duplicates()
 
 ##Loop each institution down tojust the CARD03 measures among that institution's staff role
-for i in list_institutions:
+for i in tqdm(list_institutions):
     institution = inputs[inputs["Institution_ID"] == i]
     for j in list_staff_role:
         staff_role = institution[institution["Staff_Type"] == j]
@@ -26,6 +27,9 @@ for i in list_institutions:
             "Sample_Size": staff_role["Denominator"],
             "Fail_Rate": staff_role["Fail_Rate"]})
         
+        #Drop rows with n <50
+        inst_Staff = inst_Staff[inst_Staff["Sample_Size"] >= 50]
+        print(inst_Staff)
         #Calculate p_bar
         p_bar = inst_Staff["Fail_Rate"].mean()
         #Calculate n_bar
@@ -38,9 +42,10 @@ for i in list_institutions:
 
         ##Separate out for each Staff_ID at the institution/role
         list_staff_id = inst_Staff["Staff_ID"].drop_duplicates()
-        for k in list_staff_id:
+        for k in tqdm(list_staff_id):
             staff_id = inst_Staff[inst_Staff["Staff_ID"] == k]
             #Demonstrate plots showing p-charts
+            plt.figure(figsize=(15,6))
             plt.plot(staff_id["Month"], staff_id["Fail_Rate"], label="Fail Rate")
             plt.plot(staff_id["Month"], staff_id["UAL"], label="UAL")
             plt.plot(staff_id["Month"], staff_id["LAL"], label="LAL")
@@ -48,6 +53,7 @@ for i in list_institutions:
             plt.axhline(y=p_bar, color='blue', linestyle='-', label="Average Fail Rate")
             leg = plt.legend()
             plt.show()
+            #print(staff_ID)
 
 
 
