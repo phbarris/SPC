@@ -1,5 +1,7 @@
 # Statistical Process Control Function
 
+**Out of date - NEED TO UPDATE**
+
 ## About
 
 This program assess for special cause variation using statistical process control methods (SPC). The type of data this function works with includes sample data with measurements across multiple time points. Sample data can be stratified into unique identifiers with additional categorical variables fixed to the identifier. 
