@@ -37,6 +37,7 @@ f_Rule_5_Magnitude = []
 
 #Function that takes a list with a given role and returns the p-chart for each institution
 for i in list_staff_role: #For each staff role
+    staff_df = inputs[inputs["Staff_Type"] == i]
     list_institutions = inputs["Institution_ID"].drop_duplicates() #Create a list of institutions represented
     #Create a list to hold each institution's variabe
     list_i = []
@@ -45,7 +46,7 @@ for i in list_staff_role: #For each staff role
     list_ss =[]
     list_fr =[]
     for j in list_institutions: #For each institution
-        institution_df = inputs[inputs["Institution_ID"] == j]
+        institution_df = staff_df[staff_df["Institution_ID"] == j]
         list_months = institution_df["Month"].drop_duplicates()
         
         for m in list_months: #For each month at that institution
@@ -147,7 +148,7 @@ for i in list_staff_role: #For each staff role
         if (rule_1_p == True or rule_2_p == True or rule_3_p == True or rule_4_p == True or rule_5_p == True):
             unwarrented_variation = True
         magnitude_variation = rule_1_m + rule_2_m + rule_3_m + rule_4_m + rule_5_m
-        print(compiled_institution_df)
+        #print(compiled_institution_df)
 
         #Append all values to dataframe conversion lists
         f_list_Institution.append(j)
