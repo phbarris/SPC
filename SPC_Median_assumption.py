@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from scipy.stats import shapiro
-from sklearn.preprocessing import PowerTransformer
 
 # Load source csv file
 inputs = pd.read_csv("Raw_Data.csv")
@@ -26,6 +25,7 @@ def parse_institutions(inputs):
     list_lcl = []
     list_ucl = []
     list_distribution = []
+    list_distribution_n_adjusted = []
 
     for i in institution_list:
         institution = inputs[inputs["Institution_ID"] == i] #separates individual institutions
@@ -38,18 +38,50 @@ def parse_institutions(inputs):
                 mean = staff_role["Pass_percentage"].mean()
                 if np.isnan(mean):
                     continue
+                median = staff_role["Pass_percentage"].median()
                 std = staff_role["Pass_percentage"].std()
                 lcl = mean - (3 * std)
                 ucl = mean + (3 * std)
+                distribution_adjusted = False
+                distribution = False
+                alpha = 0.05
 
                 #Is the institutional performance per measure per peer group normally distributed?
                 stat, p = shapiro(staff_role["Pass_percentage"])
-                alpha = 0.05
-                distribution = False
                 if p > alpha:
                     distribution = True
+                    
 
-                #Add values to lists
+                if distribution == False:
+                    #print(median)
+                    if (median >= 0.95):
+                        positive_staff_df = pd.DataFrame({
+                            "Institution_ID": staff_role["Institution_ID"],
+                            "Staff_ID": staff_role["Staff_ID"],
+                            "Staff_Type": staff_role["Staff_Type"],
+                            "Measure": staff_role["Measure"],
+                            "Month": staff_role["Month"],
+                            "Pass_percentage": 2 - (staff_role["Pass_percentage"])})
+                        staff_role_updated = pd.concat([staff_role, positive_staff_df])
+
+                        #plt.figure(figsize=(15,6))
+                        #plt.title(str(i) + str(j) + str(k), fontsize=15)
+                        #sns.histplot(staff_role_updated["Pass_percentage"], kde=True, #color="red")
+                        #plt.show()
+
+                        mean = staff_role_updated["Pass_percentage"].mean()
+                        std = staff_role_updated["Pass_percentage"].mean()
+                        lcl = mean - (3 * std)
+                        ucl = mean + (3 * std)
+
+                        stat, p = shapiro(staff_role_updated["Pass_percentage"])
+                        if p > alpha:
+                            distribution = True
+                            distribution_adjusted = True
+                        print(p)
+                        print(distribution)
+
+            #Add values to lists
                 list_institutions.append(i)
                 list_measures.append(j)
                 list_staffrole.append(k)
@@ -58,6 +90,7 @@ def parse_institutions(inputs):
                 list_lcl.append(lcl)
                 list_ucl.append(ucl)
                 list_distribution.append(distribution)
+                list_distribution_n_adjusted.append(distribution_adjusted)
 
     #Transform lists into dictionary for dataframe conversion
     institution_df = pd.DataFrame(
@@ -68,7 +101,8 @@ def parse_institutions(inputs):
         "Standard_Deviation": list_std,
         "Lower_Control_Limit": list_lcl,
         "Upper_Control_Limit": list_ucl,
-        "Distribution": list_distribution})
+        "Distribution": list_distribution,
+        "Distribution_Adjusted": list_distribution_n_adjusted})
 
     return(institution_df)
 
@@ -114,6 +148,7 @@ def spc(institution_df, staff_performance_list):
     list_Measure = []
     list_Time_Points_Tracked = []
     list_Distribution = []
+    list_Distribution_Adjusted = []
     list_Unwarented_Variation = []
     list_Magnitude_of_Varitation = []
     list_Magnitude_of_Positive_Variation = []
@@ -139,6 +174,7 @@ def spc(institution_df, staff_performance_list):
         lcl = matched_institution[0][5]
         ucl = matched_institution[0][6]
         distribution = matched_institution[0][7]
+        distribution_Adjusted = matched_institution[0][8]
 
         pass_percentages = staff_ID[4]
         size = len(pass_percentages)
@@ -225,6 +261,7 @@ def spc(institution_df, staff_performance_list):
         list_Measure.append(staff_ID[3])
         list_Time_Points_Tracked.append(len(staff_ID[4]))
         list_Distribution.append(distribution)
+        list_Distribution_Adjusted.append(distribution_Adjusted)
         list_Unwarented_Variation.append(unwarrented_Variation)
         list_Magnitude_of_Varitation.append(mag_Variation_tot)
         list_Magnitude_of_Positive_Variation.append(mag_Variation_p)
@@ -248,6 +285,7 @@ def spc(institution_df, staff_performance_list):
          "Measure": list_Measure,
          "Time_Points_tracked": list_Time_Points_Tracked,
          "Distribution": list_Distribution,
+         "Distribution_Adjusted": list_Distribution_Adjusted,
          "Unwarrented_Variation": list_Unwarented_Variation,
          "Magnitude_of_Variation": list_Magnitude_of_Varitation,
          "Magnitude_of_Positive_Variation": list_Magnitude_of_Positive_Variation,
