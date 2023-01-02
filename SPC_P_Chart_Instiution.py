@@ -6,10 +6,10 @@ from tqdm import tqdm
 pd.set_option('display.max_columns', None)
 
 #Import data
-inputs = pd.read_csv("Raw_Data.csv")
+inputs = pd.read_csv("Inputs5.csv")
 
 #Reduce to only rows for CARD03
-inputs = inputs[inputs["Measure"] == "BP01"]
+inputs = inputs[inputs["Measure"] == "CARD02"]
 
 #Create a row for fail rate
 inputs["Fail_Rate"] = 1 - inputs["Pass_percentage"]
@@ -18,7 +18,6 @@ inputs["Fail_Rate"] = 1 - inputs["Pass_percentage"]
 list_staff_role = inputs["Staff_Type"].drop_duplicates()
 
 #Create empty lists to build output dataframe from
-f_list_Staff_ID = []
 f_list_Institution = []
 f_list_Role = []
 f_list_Quarters_Tracked = []
@@ -38,52 +37,81 @@ f_Rule_5_Magnitude = []
 
 #Function that takes a list with a given role and returns the p-chart for each institution
 for i in list_staff_role: #For each staff role
+    staff_df = inputs[inputs["Staff_Type"] == i]
     list_institutions = inputs["Institution_ID"].drop_duplicates() #Create a list of institutions represented
     #Create a list to hold each institution's variabe
     list_i = []
+    list_sr = []
     list_m = []
     list_ss =[]
     list_fr =[]
-    for i in list_institutions: #For each institution
-        institution_df = inputs[inputs["Institution_ID"] == i]
+    for j in list_institutions: #For each institution
+        institution_df = staff_df[staff_df["Institution_ID"] == j]
         list_months = institution_df["Month"].drop_duplicates()
         
         for m in list_months: #For each month at that institution
             institution_month_df = institution_df[institution_df["Month"] == m]
-            institution = i
+            institution = j
             month = m
             sample_size = institution_month_df["Denominator"].sum()
             fail_rate = institution_month_df["Fail_Rate"].mean()
             list_i.append(institution)
+            list_sr.append(i)
             list_m.append(month)
             list_ss.append(sample_size)
             list_fr.append(fail_rate)
     compiled_df = pd.DataFrame({ #Create new data frame that summarize each institution
         "Institution": list_i,
+        "Staff_Role": list_sr,
         "Month": list_m,
         "Sample_Size": list_ss,
         "Fail_Rate": list_fr})
-    for i in list_institutions: #For each institution, generate a control chart
-        compiled_institution_df = compiled_df[compiled_df["Institution"] == i]
+
+    for j in list_institutions: #For each institution, generate a control chart
+        
+        compiled_institution_df = compiled_df[compiled_df["Institution"] == j]
         compiled_institution_df["Month"] = pd.to_datetime(compiled_institution_df["Month"])
         compiled_institution_df = compiled_institution_df.groupby(compiled_institution_df["Month"].dt.to_period("Q")).agg({"Sample_Size": "sum",
                                                                                                                            "Fail_Rate": "mean"}).reset_index(drop=True)
-        compiled_institution_df["Institution_ID"] = i
+        compiled_institution_df["Institution_ID"] = j
         #compiled_institution_df = compiled_institution_df[compiled_institution_df["Sample_Size"] >= 50]
+        n = compiled_institution_df["Sample_Size"].sum()
         p_bar = (compiled_institution_df["Sample_Size"] * compiled_institution_df["Fail_Rate"]).sum()/compiled_institution_df["Sample_Size"].sum()
         n_bar = compiled_institution_df["Sample_Size"].mean()
         compiled_institution_df["Standard_Deviation"] = np.sqrt((p_bar * (1 - p_bar))/(compiled_institution_df["Sample_Size"]))
         compiled_institution_df["UAL"] = (p_bar + (3 * compiled_institution_df["Standard_Deviation"]))
         compiled_institution_df["LAL"] = (p_bar - (3 * compiled_institution_df["Standard_Deviation"]))
+        compiled_institution_df["2UAL/3"] = (p_bar + (2 * compiled_institution_df["Standard_Deviation"]))
+        compiled_institution_df["UAL/3"] = (p_bar + (compiled_institution_df["Standard_Deviation"]))
+        staff_role = compiled_df["Staff_Role"][0]
         
-        #plt.figure(figsize=(15,6))
-        #plt.plot(compiled_institution_df["Fail_Rate"], label="Fail Rate")
-        #plt.plot(compiled_institution_df["UAL"], label="UAL")
-        #plt.plot(compiled_institution_df["LAL"], label="LAL")
-        #plt.title(str(i))
-        #plt.axhline(y=p_bar, color='blue', linestyle='-', label="Average Fail Rate")
-        #leg = plt.legend()
-        #plt.show()
+        #Generate p-charts
+        compiled_institution_df["plot_fail"] = compiled_institution_df["Fail_Rate"] * 100
+        compiled_institution_df["plot_UAL"] = compiled_institution_df["UAL"] * 100
+        compiled_institution_df["plot_LAL"] = compiled_institution_df["LAL"] * 100
+        compiled_institution_df["plot_2UAL/3"] = compiled_institution_df["2UAL/3"] * 100
+        compiled_institution_df["plot_UAL/3"] = compiled_institution_df["UAL/3"] * 100
+        compiled_institution_df["neg_plot_2LAL/3"] = (p_bar - (2 * compiled_institution_df["Standard_Deviation"])) * 100
+        compiled_institution_df["neg_plot_LAL/3"] = (p_bar - compiled_institution_df["Standard_Deviation"]) * 100
+        plot_p_bar = p_bar * 100
+        plt.figure(figsize=(15,6))
+        plt.plot(compiled_institution_df["plot_fail"], color="#00274C", marker="o", markersize=5)
+        plt.plot(compiled_institution_df["plot_UAL"], color="#FFCB05", linewidth=2)
+        plt.plot(compiled_institution_df["plot_LAL"], color="#FFCB05", linewidth=2)
+        plt.plot(compiled_institution_df["plot_2UAL/3"], color="#D3D3D3", linestyle=":")
+        plt.plot(compiled_institution_df["neg_plot_2LAL/3"], color="#D3D3D3", linestyle=":")
+        plt.plot(compiled_institution_df["plot_UAL/3"], color="#D3D3D3", linestyle="--")
+        plt.plot(compiled_institution_df["neg_plot_LAL/3"], color="#D3D3D3", linestyle="--")
+        plt.title("Institution " + str(j) + ": " + str(staff_role))
+        plt.xlabel("Quarter")
+        plt.ylabel("Percentage of Failed Cased")
+        plt.xscale("linear")
+        plt.axhline(y=plot_p_bar, color='#808080', linewidth=2, linestyle='-.', label="Average Fail Rate")
+        plt.show()
+        
+        
+        compiled_institution_df.drop(compiled_institution_df.index[5:], inplace=True)
+        print(compiled_institution_df)
         
         ##Perform SPC functions
         #Rule 1: Point above the UAL
@@ -99,11 +127,12 @@ for i in list_staff_role: #For each staff role
         rule_2_p = False
         compiled_institution_df["R2"] = np.where((compiled_institution_df["Fail_Rate"] > compiled_institution_df["2UAL/3"]), 1, 0)
         for i in range(size - 1):
-            if (compiled_institution_df["R2"][i] == 1 and compiled_institution_df["R2"][i + 1] == 1):
+            if ((compiled_institution_df["R2"][i] + compiled_institution_df["R2"][i + 1]) == 2):
+            #if (compiled_institution_df["R2"][i] == 1 & compiled_institution_df["R2"][i + 1] == 1):
                 rule_2_m = rule_2_m + 1
         if rule_2_m > 0:
             rule_2_p = True
-
+       
         #Rule 3: 4 of 5 consecutive points above or below 1 standard deviations (Zone B or beyond)
         rule_3_m = 0
         rule_3_p = False
@@ -138,12 +167,11 @@ for i in list_staff_role: #For each staff role
         if (rule_1_p == True or rule_2_p == True or rule_3_p == True or rule_4_p == True or rule_5_p == True):
             unwarrented_variation = True
         magnitude_variation = rule_1_m + rule_2_m + rule_3_m + rule_4_m + rule_5_m
-
+        #print(compiled_institution_df)
 
         #Append all values to dataframe conversion lists
-        f_list_Staff_ID.append(k)
-        f_list_Institution.append(i)
-        f_list_Role.append(j)
+        f_list_Institution.append(j)
+        f_list_Role.append(staff_role)
         f_list_Quarters_Tracked.append(len(compiled_institution_df))
         f_list_Sample_Size.append(n)
         f_list_Unwarrented_Variation.append(unwarrented_variation)
@@ -161,7 +189,6 @@ for i in list_staff_role: #For each staff role
             
 #Create a resulting dataframe
 output_df = pd.DataFrame({
-    "Staff_ID": f_list_Staff_ID,
     "Institution": f_list_Institution,
     "Staff_Role": f_list_Role,
     "Quarters_Tracked": f_list_Quarters_Tracked,
@@ -180,7 +207,7 @@ output_df = pd.DataFrame({
     "Rule_5_Magnitude": f_Rule_5_Magnitude,
     })
 
-output_df.to_csv("SPC_Results3.csv")
+output_df.to_csv("SPC_Results5.csv")
 
        
             
